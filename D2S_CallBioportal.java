@@ -135,7 +135,7 @@ public class D2S_CallBioportal {
 		}
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws SAXException, IOException, ParserConfigurationException, InterruptedException {
 		if (args.length < 2) {
 			System.out
 					.println("Please provide the directory to read the snapshot of files to be annotated, and the output directory");
