@@ -67,9 +67,9 @@ public class D2S_CallBioportal {
 		processHTMLFiles(bioportalOutputDirectory, htmlFiles);
 	}
 
-	private void processHTMLFiles(String bioportalOutputDirectory, File[] xmlFiles) throws FileNotFoundException, InterruptedException {
+	private void processHTMLFiles(String bioportalOutputDirectory, File[] htmlFiles) throws FileNotFoundException, InterruptedException {
 		
-		for (File currentHTMLFile : xmlFiles) {
+		for (File currentHTMLFile : htmlFiles) {
 			String outputName = currentHTMLFile.getName();
 			outputName=outputName.replaceAll("html","xml");
 			outputName="output-"+outputName;
@@ -148,6 +148,7 @@ public class D2S_CallBioportal {
 					.println("Please run first mvn -P create-snapshot, since there is no snapshot to be processed");
 			return;
 		}
+		
 		File bioportalDirectory = new File(args[1]);
 		if(!bioportalDirectory.exists()){
 			bioportalDirectory.mkdirs();
