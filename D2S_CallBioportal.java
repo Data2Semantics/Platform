@@ -153,7 +153,7 @@ public class D2S_CallBioportal {
 		if(!bioportalDirectory.exists()){
 			bioportalDirectory.mkdirs();
 		}
-		
+		System.out.println("Calling bioportal for files from directory: "+args[0]+" storing output into: "+args[1]);
 		D2S_CallBioportal bioportalCaller = new D2S_CallBioportal(args[0], args[1]);
 		bioportalCaller.processSnapshot();
 

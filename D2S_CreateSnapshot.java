@@ -2,17 +2,21 @@ package org.data2semantics.modules;
 
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
+import java.util.TreeMap;
 import java.util.Vector;
 
 import org.apache.commons.io.FileUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.yaml.snakeyaml.Yaml;
 
 
 /**
@@ -24,9 +28,8 @@ import org.jsoup.nodes.Document;
 public class D2S_CreateSnapshot {
 		
 		// List of local files and urls from which snapshot will be created
-		Vector<String[]> fileURLList = new Vector<String[]>();
 		String SNAPSHOT_DIRECTORY ="results/snapshots";
-		
+		HashMap<String, String> sourceMap = new HashMap<String, String>();
 		
 		/**
 		 * 
@@ -35,8 +38,7 @@ public class D2S_CreateSnapshot {
 		 */
 		
 		public D2S_CreateSnapshot(String sourcePath) {
-			
-			initializeFileURLList(new File(sourcePath));
+			loadSourceFile(sourcePath);
 		}
 	
 		/**
@@ -47,31 +49,23 @@ public class D2S_CreateSnapshot {
 		public D2S_CreateSnapshot(String sourcePath, String snapshotDirectory) {
 			
 			this.SNAPSHOT_DIRECTORY = snapshotDirectory;
-			initializeFileURLList(new File(sourcePath));
+			loadSourceFile(sourcePath);
 			
 		}
 
-		/**
-		 * Read from source file, split file and source URL into fileURLList
-		 * @param sourceFile
-		 */
-		private void initializeFileURLList(File sourceFile) {
+		private void loadSourceFile(String sourceFile){
+			Yaml loader = new Yaml();
+			
 			try {
-				Scanner scanner = new Scanner(sourceFile);
-				while(scanner.hasNextLine()){
-					String [] fileURL = scanner.nextLine().split(" ");
-					fileURLList.add(fileURL);
-				}
+				sourceMap = (HashMap<String,String>)loader.load(new FileInputStream(sourceFile));
 			} catch (FileNotFoundException e) {
-				
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
 		}
 		
-		public List<String[]> getFileList(){
-			return fileURLList;
-		}
-		
+
 		/**
 		 * Generating snapshot using apache commons-io copyURLToFile
 		 */
@@ -80,12 +74,16 @@ public class D2S_CreateSnapshot {
 			if(!resultDir.exists()){
 				resultDir.mkdirs();
 			}
-			for(String[] fileURL : fileURLList){
+			for(String localFileName : sourceMap.keySet()){
 				
 				try {
 				
-					File localFile = new File(resultDir,fileURL[0]);
-					URL  sourceURL = new URL(fileURL[1]);
+					File localFile = new File(resultDir,localFileName);
+					// not recreating existing files
+					if(localFile.exists()) continue;
+					
+					URL  sourceURL = new URL(sourceMap.get(localFileName));
+					System.out.println("Creating snapshot for "+localFile+" from "+sourceURL);
 					FileUtils.copyURLToFile(sourceURL, localFile);
 				
 				} catch (MalformedURLException e) {
@@ -104,24 +102,19 @@ public class D2S_CreateSnapshot {
 		 * @param args
 		 */
 		public static void main(String[] args) {
-			if(args.length < 1){
-				System.out.println("Please supplly the path to source file that you wanted to process");
+			if(args.length < 2){
+				System.out.println("\nPlease supplly the \n[1] path to source file (localFile, remote URL in YAML format" +
+								   "\n[2] snapshot directory to be generated");
 				return;
 			}
 			
-			// If only the source file is supplied
-			if(args.length == 1){
-				String fileName = args[0];
-				D2S_CreateSnapshot snapshot= new D2S_CreateSnapshot(fileName);
-				snapshot.generateSnapshot();
-			} else
-			if(args.length == 2){
-				String sourceFile = args[0];
-				String snapshotDirectory = args[1];
-				D2S_CreateSnapshot snapshot= new D2S_CreateSnapshot(sourceFile, snapshotDirectory);
-				snapshot.generateSnapshot();
+			String sourceFile = args[0];
+			String snapshotDirectory = args[1];
+			System.out.println("Creating snapshots using source file from : "+sourceFile + " into directory: " +snapshotDirectory);
+			
+			D2S_CreateSnapshot snapshot= new D2S_CreateSnapshot(sourceFile, snapshotDirectory);
+			snapshot.generateSnapshot();
 				
-			}
 			
 		}
 		

@@ -20,6 +20,7 @@ import org.data2semantics.recognize.D2S_AnnotationOntologyWriter;
 import org.data2semantics.recognize.D2S_BioPortalAnnotationHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.yaml.snakeyaml.Yaml;
 
 public class D2S_CreateAnnotationOntology {
 	
@@ -59,7 +60,11 @@ public class D2S_CreateAnnotationOntology {
 			is = new InputSource(reader);
 			is.setEncoding("UTF-8");
 			
-			String originalSource = originalFileSources.get(currentResultFile.getName());
+			String localName = currentResultFile.getName();
+			localName = localName.replaceAll("output-","");
+			localName = localName.replaceAll(".xml","");
+			
+			String originalSource = originalFileSources.get(localName);
 			bioPortalAnnotationSAXHandler = new D2S_BioPortalAnnotationHandler(currentResultFile.getName(), originalSource);
 			parser.parse(is, bioPortalAnnotationSAXHandler);
 			
@@ -88,6 +93,7 @@ public class D2S_CreateAnnotationOntology {
 			return;
 		}
 		
+		System.out.println("Creating Annotation Ontology based on bioportal output from: "+args[0]+" using source file: "+args[1]+" into directory : "+args[2]);
 		D2S_CreateAnnotationOntology createAO = new D2S_CreateAnnotationOntology(args[0], args[1], args[2]);
 		createAO.createAnnotationOntology();
 
@@ -97,19 +103,13 @@ public class D2S_CreateAnnotationOntology {
 	// To be used when generation annotation ontology.
 	// We will replace this with YAML when I am in the mood.
 	private void initializeSourceFiles(String sourceFile) {
-		File sourceList = new File(sourceFile);
-		try {
-			Scanner scanner = new Scanner(sourceList);
-			while(scanner.hasNextLine()){
-				String fileAndURL = scanner.nextLine();
-				String fileURL[] = fileAndURL.split(" ");
-				originalFileSources.put("output-"+fileURL[0]+".xml", fileURL[1]);
+	      	Yaml loader = new Yaml();
+			try {
+				originalFileSources  = (HashMap<String,String>) loader.load(new FileInputStream(sourceFile));
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 	
 }
