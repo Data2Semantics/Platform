@@ -17,31 +17,47 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.data2semantics.recognize.D2S_Annotation;
 import org.data2semantics.recognize.D2S_AnnotationOntologyWriter;
+import org.data2semantics.recognize.D2S_AnnotationWriter;
 import org.data2semantics.recognize.D2S_BioPortalAnnotationHandler;
+import org.data2semantics.recognize.D2S_OpenAnnotationWriter;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.yaml.snakeyaml.Yaml;
 
-public class D2S_CreateAnnotationOntology {
+public class D2S_AnnotationRenderer {
 	
 	HashMap<String, String> originalFileSources = new HashMap<String, String>();
-	String bioportalResultDir, outputFile, sourceFile;
-	public D2S_CreateAnnotationOntology(String bioportalResultDir, String sourceFile, String outputFile){
+	String bioportalResultDir, outputFile, sourceFile, type;
+	
+	public D2S_AnnotationRenderer(String bioportalResultDir, String sourceFile, String outputFile, String type){
 	   initializeSourceFiles(sourceFile);
 	   this.bioportalResultDir = bioportalResultDir;
 	   this.sourceFile = sourceFile;
 	   this.outputFile = outputFile;
+	   this.type = type;
 	   
     }
-    public void createAnnotationOntology() throws SAXException, IOException, ParserConfigurationException{
+    public void render() throws SAXException, IOException, ParserConfigurationException{
     	File processedDir = new File(bioportalResultDir);
     	
 		File [] bpresults = processedDir.listFiles();
 		
-		D2S_AnnotationOntologyWriter aoWriter = new D2S_AnnotationOntologyWriter(outputFile);
 		
-		aoWriter.startWriting();
-		aoWriter.addFileAndURLs(Arrays.asList(bpresults),originalFileSources);
+		D2S_AnnotationWriter writer ;
+		
+		if (type == "AO") {
+			writer = new D2S_AnnotationOntologyWriter(outputFile);
+			writer.startWriting();
+			
+			
+			((D2S_AnnotationOntologyWriter) writer).addFileAndURLs(Arrays.asList(bpresults),originalFileSources);
+		} else {
+			writer = new D2S_OpenAnnotationWriter(outputFile);
+			writer.startWriting();
+		}
+		
+		
+		
 		SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
 		
 		
@@ -66,19 +82,20 @@ public class D2S_CreateAnnotationOntology {
 			
 			currentAnnotations = bioPortalAnnotationSAXHandler.getAnnotations();
 			for(D2S_Annotation currentAnnotation : currentAnnotations)
-				aoWriter.addAnnotation(currentAnnotation);
+				writer.addAnnotation(currentAnnotation);
 			
 		}
 		
-		aoWriter.stopWriting();
+		writer.stopWriting();
 	}
 	
 	public static void main(String[] args) throws SAXException, IOException, ParserConfigurationException {
-		if(args.length < 3){
-			System.out.println("\nThree arguments required: "+
+		if(args.length < 4){
+			System.out.println("\n Four arguments required: "+
 								"\n[1] directory where bioportal annotation xml results resides, "+
 								"\n[2] initial source file (local cache + original URL) list " +
-								"\n[3] and the output file name ");
+								"\n[3] the output file name " +
+								"\n[4] the type of ontology (AO or OA)");
 			return;
 		}
 		
@@ -89,9 +106,13 @@ public class D2S_CreateAnnotationOntology {
 			return;
 		}
 		
-		System.out.println("Creating Annotation Ontology based on bioportal output from: "+args[0]+" using source file: "+args[1]+" into directory : "+args[2]);
-		D2S_CreateAnnotationOntology createAO = new D2S_CreateAnnotationOntology(args[0], args[1], args[2]);
-		createAO.createAnnotationOntology();
+		String type = args[3];
+		if (type != "AO") {
+			type = "OA";
+		}
+		System.out.println("Creating RDF of type "+args[3]+" based on bioportal output from: "+args[0]+" using source file: "+args[1]+" into directory : "+args[2]);
+		D2S_AnnotationRenderer renderer = new D2S_AnnotationRenderer(args[0], args[1], args[2], type);
+		renderer.render();
 
    }
 	
