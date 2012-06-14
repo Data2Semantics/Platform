@@ -60,11 +60,7 @@ public class D2S_CreateAnnotationOntology {
 			is = new InputSource(reader);
 			is.setEncoding("UTF-8");
 			
-			String localName = currentResultFile.getName();
-			localName = localName.replaceAll("output-","");
-			localName = localName.replaceAll(".xml","");
-			
-			String originalSource = originalFileSources.get(localName);
+			String originalSource = originalFileSources.get(currentResultFile.getName());
 			bioPortalAnnotationSAXHandler = new D2S_BioPortalAnnotationHandler(currentResultFile.getName(), originalSource);
 			parser.parse(is, bioPortalAnnotationSAXHandler);
 			
@@ -110,6 +106,12 @@ public class D2S_CreateAnnotationOntology {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			// Either appending here or on local name
+			HashMap<String,String> appendedFiles = new HashMap<String, String>();
+			for(String fileName : originalFileSources.keySet()){
+				appendedFiles.put("output-"+fileName+".xml", originalFileSources.get(fileName));
+			}
+			originalFileSources.putAll(appendedFiles);
 	}
 	
 }
