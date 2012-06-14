@@ -73,7 +73,7 @@ public class D2S_CallBioportal {
 			String outputName = currentHTMLFile.getName();
 			outputName=outputName.replaceAll("html","xml");
 			outputName="output-"+outputName;
-			String outputFilePath = bioportalOutputDirectory+"\\"+outputName;
+			String outputFilePath = bioportalOutputDirectory+"/"+outputName;
 			
 			// IF this file already created, move on.
 			if(new File(outputFilePath).exists()) continue;
