@@ -2,14 +2,12 @@ package org.data2semantics.modules;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Scanner;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -20,10 +18,10 @@ import org.data2semantics.recognize.D2S_AnnotationOntologyWriter;
 import org.data2semantics.recognize.D2S_AnnotationWriter;
 import org.data2semantics.recognize.D2S_BioPortalAnnotationHandler;
 import org.data2semantics.recognize.D2S_OpenAnnotationWriter;
+import org.data2semantics.util.D2S_Utils;
 import org.openrdf.repository.RepositoryException;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.yaml.snakeyaml.Yaml;
 
 
 
@@ -33,7 +31,8 @@ public class D2S_AnnotationRenderer {
 	String bioportalResultDir, outputFile, sourceFile, type;
 	
 	public D2S_AnnotationRenderer(String bioportalResultDir, String sourceFile, String outputFile, String type){
-	   initializeSourceFiles(sourceFile);
+	   
+	   originalFileSources = D2S_Utils.loadSourceMap(sourceFile);
 	   this.bioportalResultDir = bioportalResultDir;
 	   this.sourceFile = sourceFile;
 	   this.outputFile = outputFile;
@@ -128,20 +127,21 @@ public class D2S_AnnotationRenderer {
 	// Load source file information into a hashmap, mapping file name to original URL
 	// To be used when generation annotation ontology.
 	// We will replace this with YAML when I am in the mood.
-	private void initializeSourceFiles(String sourceFile) {
-	      	Yaml loader = new Yaml();
-			try {
-				originalFileSources  = (HashMap<String,String>) loader.load(new FileInputStream(sourceFile));
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			// Either appending here or on local name
-			HashMap<String,String> appendedFiles = new HashMap<String, String>();
-			for(String fileName : originalFileSources.keySet()){
-				appendedFiles.put("output-"+fileName+".xml", originalFileSources.get(fileName));
-			}
-			originalFileSources.putAll(appendedFiles);
-	}
+//	private void initializeSourceFiles(String sourceFile) {
+//	      	Yaml loader = new Yaml();
+//			try {
+//				originalFileSources  = (HashMap<String,String>) loader.load(new FileInputStream(sourceFile));
+//			} catch (FileNotFoundException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//			// Either appending here or on local name
+//			HashMap<String,String> appendedFiles = new HashMap<String, String>();
+//			for(String fileName : originalFileSources.keySet()){
+//				appendedFiles.put("output-"+fileName+".xml", originalFileSources.get(fileName));
+//			}
+//			originalFileSources.putAll(appendedFiles);
+//	}
 	
+	// Now reading from turtle format
 }

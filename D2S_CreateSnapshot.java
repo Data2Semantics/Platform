@@ -1,8 +1,6 @@
 package org.data2semantics.modules;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -10,7 +8,7 @@ import java.net.URL;
 import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
-import org.yaml.snakeyaml.Yaml;
+import org.data2semantics.util.D2S_Utils;
 
 /**
  * This is the class responsible for getting local snapshot/files from original
@@ -55,14 +53,8 @@ public class D2S_CreateSnapshot {
 	}
 
 	private void loadSourceFile(String sourceFile) {
-		Yaml loader = new Yaml();
-
-		try {
-			sourceMap = (HashMap<String, String>) loader.load(new FileInputStream(sourceFile));
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	
+			sourceMap = D2S_Utils.loadSourceMap(sourceFile);
 
 	}
 
