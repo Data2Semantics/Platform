@@ -20,9 +20,12 @@ import org.data2semantics.recognize.D2S_AnnotationOntologyWriter;
 import org.data2semantics.recognize.D2S_AnnotationWriter;
 import org.data2semantics.recognize.D2S_BioPortalAnnotationHandler;
 import org.data2semantics.recognize.D2S_OpenAnnotationWriter;
+import org.openrdf.repository.RepositoryException;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.yaml.snakeyaml.Yaml;
+
+
 
 public class D2S_AnnotationRenderer {
 	
@@ -52,8 +55,14 @@ public class D2S_AnnotationRenderer {
 			
 			((D2S_AnnotationOntologyWriter) writer).addFileAndURLs(Arrays.asList(bpresults),originalFileSources);
 		} else {
-			writer = new D2S_OpenAnnotationWriter(outputFile);
-			writer.startWriting();
+			try {
+				writer = new D2S_OpenAnnotationWriter(outputFile);
+				writer.startWriting();
+			} catch (RepositoryException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return;
+			}
 		}
 		
 		
