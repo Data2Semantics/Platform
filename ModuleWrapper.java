@@ -50,18 +50,18 @@ public class ModuleWrapper {
 	        Class moduleClass = classLoader.loadClass(moduleName);
 	        log.info("Loaded module: " + moduleClass.getName());
 
-	        Repository repo = new SailRepository(new MemoryStore());
-			repo.initialize();
+	        Repository inputRepository = new SailRepository(new MemoryStore());
+			inputRepository.initialize();
 			log.info("Initialized repository");
 
-			ValueFactory vf = repo.getValueFactory();
+			ValueFactory vf = inputRepository.getValueFactory();
 			URI graphURI = vf.createURI(graph);
 			URI resourceURI = vf.createURI(resource);
 			
 			File file = new File(fileName);
 			log.info("Loading RDF in N3 format from "+ fileName);
 			RepositoryConnection con;
-			con = repo.getConnection();
+			con = inputRepository.getConnection();
 			
 			con.add(file, "http://foo/bar#", RDFFormat.N3, graphURI);
 	        log.info("Done loading");
@@ -70,14 +70,18 @@ public class ModuleWrapper {
 	        log.info("Calling constructor of module "+moduleName);
 	        
 	        Constructor moduleConstructor = ModuleWrapper.class.getDeclaredConstructor(moduleClass);
-	        AbstractModule module = (AbstractModule) moduleConstructor.newInstance(repo, graphURI, resourceURI);
+	        AbstractModule module = (AbstractModule) moduleConstructor.newInstance(inputRepository, graphURI, resourceURI);
 	        
-	        log.info("Done");
+	        log.info("Module constructed");
 	        
 	        log.info("Starting module");
-	        module.start();
+	        Repository outputRepository = module.start();
+	        log.info("Module run completed");
 	        
-	        log.info("Done");
+	        // TODO Add provenance information about ModuleWrapper run
+	        
+	        // TODO Write outputRepository to output.rdf
+	        
 			
 	    } catch (ClassNotFoundException e) {
 	    	// TODO Auto-generated catch block
