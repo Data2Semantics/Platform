@@ -16,6 +16,7 @@ public abstract class AbstractModule {
 		
 	}
 	
-	public abstract void start();
+	public abstract Repository start();
+
 	
 }
