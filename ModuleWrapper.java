@@ -6,6 +6,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import org.data2semantics.recognize.D2S_OpenAnnotationWriter;
+import org.data2semantics.util.RepositoryWriter;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.repository.Repository;
@@ -80,7 +81,9 @@ public class ModuleWrapper {
 	        
 	        // TODO Add provenance information about ModuleWrapper run
 	        
-	        // TODO Write outputRepository to output.rdf
+	        RepositoryWriter rw = new RepositoryWriter(outputRepository, "output.n3");
+	        
+	        rw.write();
 	        
 			
 	    } catch (ClassNotFoundException e) {
