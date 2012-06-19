@@ -78,6 +78,7 @@ public class D2S_AnnotationRenderer {
 		
 		
 		for(File currentResultFile : bpresults){
+			System.out.println("Current file: "+currentResultFile);
 			
 			parser = saxParserFactory.newSAXParser();
 			reader = new InputStreamReader(new FileInputStream(currentResultFile),"UTF-8");
