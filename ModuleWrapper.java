@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import org.apache.commons.cli.Options;
 import org.data2semantics.recognize.D2S_OpenAnnotationWriter;
 import org.data2semantics.util.RepositoryWriter;
 import org.openrdf.model.URI;
@@ -27,14 +28,15 @@ public class ModuleWrapper {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		
 		if (args.length < 3) {
 			System.out
 					.println("\nModuleWrapper\n" +
 							"Please use the following arguments: \n" +
 							"[1] - The Java Class that is your module (use the full package path)" +
-							"[2] RDF file containing the data your module must run on.\n" +
-							"[3] The named graph URI in that file that contains the actual data (use 'default' for no graph).\n" +
-							"[4] The URI of a specific resource in the file."
+							"[2] - RDF file containing the data your module must run on.\n" +
+							"[3] - The named graph URI in that file that contains the actual data (use 'default' for no graph).\n" +
+							"[4] - The URI of a specific resource in the file."
 							);
 			return;
 		}
