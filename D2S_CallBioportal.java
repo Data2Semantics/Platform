@@ -1,17 +1,25 @@
 package org.data2semantics.modules;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
 import java.util.Scanner;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.io.comparator.LastModifiedFileComparator;
+import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.data2semantics.recognize.D2S_BioportalClient;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
@@ -31,11 +39,44 @@ public class D2S_CallBioportal {
 
 	String SNAPSHOT_DIRECTORY = "results/snapshots";
 	String BIOPORTAL_OUTPUT_DIRECTORY = "results/bioportal";
+	String snapshotTimestamp = "";
 
 	
 	D2S_CallBioportal(String snapshotDirectory, String bioportalDirectory){
-		SNAPSHOT_DIRECTORY = snapshotDirectory;
-		BIOPORTAL_OUTPUT_DIRECTORY = bioportalDirectory;
+		File snapDir = new File(snapshotDirectory);
+		
+		File[] timeDirs = snapDir.listFiles((FileFilter) DirectoryFileFilter.INSTANCE);
+		
+		Arrays.sort(timeDirs, LastModifiedFileComparator.LASTMODIFIED_REVERSE);
+		
+		SNAPSHOT_DIRECTORY = timeDirs[0].getPath();
+		System.out.println(SNAPSHOT_DIRECTORY);
+		
+		snapshotTimestamp = SNAPSHOT_DIRECTORY.substring(SNAPSHOT_DIRECTORY.lastIndexOf('/') + 1 );
+		
+		// Make sure that we have a timestamp for the annotations
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+		 
+		String timestamp = sdf.format(new Date());
+		
+		BIOPORTAL_OUTPUT_DIRECTORY += "/" + timestamp;
+
+		File bpDir = new File(BIOPORTAL_OUTPUT_DIRECTORY);
+		if(!bpDir.exists()){
+			bpDir.mkdirs();
+		}
+		
+		try {
+			FileWriter writer = new FileWriter(BIOPORTAL_OUTPUT_DIRECTORY + "/snapshotTimestamp" );
+			writer.write(snapshotTimestamp);
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		System.out.println("Calling bioportal for files from directory: "+SNAPSHOT_DIRECTORY+" storing output into: "+BIOPORTAL_OUTPUT_DIRECTORY);
+		
 	}
 
 	public void processSnapshot() throws SAXException, IOException, ParserConfigurationException, InterruptedException{
@@ -83,13 +124,13 @@ public class D2S_CallBioportal {
 			D2S_BioportalClient client = new D2S_BioportalClient();
 			
 			try {
-				System.out.println("Start writing"+outputFilePath);
+				System.out.println("Start writing "+outputFilePath);
 				while (fileScanner.hasNextLine()) {
 					stringBuilder.append(fileScanner.nextLine() + "\n");
 				}
 				String textToAnnotate = Jsoup.clean(stringBuilder.toString(), Whitelist.none());
 				client.annotateToFile(textToAnnotate,"xml",new File(outputFilePath));
-				System.out.println("Done writing"+outputFilePath);
+				System.out.println("Done writing "+outputFilePath);
 			} finally {
 				fileScanner.close();
 			}
@@ -151,7 +192,7 @@ public class D2S_CallBioportal {
 		if(!bioportalDirectory.exists()){
 			bioportalDirectory.mkdirs();
 		}
-		System.out.println("Calling bioportal for files from directory: "+args[0]+" storing output into: "+args[1]);
+		
 		D2S_CallBioportal bioportalCaller = new D2S_CallBioportal(args[0], args[1]);
 		bioportalCaller.processSnapshot();
 

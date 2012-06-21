@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
@@ -22,6 +24,7 @@ public class D2S_CreateSnapshot {
 
 	// List of local files and urls from which snapshot will be created
 	String SNAPSHOT_DIRECTORY = "results/snapshots";
+	String timestamp;
 	HashMap<String, String> sourceMap = new HashMap<String, String>();
 
 	/**
@@ -33,7 +36,11 @@ public class D2S_CreateSnapshot {
 	 */
 
 	public D2S_CreateSnapshot(String sourcePath) {
-		loadSourceFile(sourcePath);
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+		 
+		timestamp = sdf.format(new Date());
+		SNAPSHOT_DIRECTORY += "/" + timestamp;
+		sourceMap = D2S_Utils.loadSourceMap(sourcePath);
 	}
 
 	/**
@@ -47,16 +54,16 @@ public class D2S_CreateSnapshot {
 	 */
 	public D2S_CreateSnapshot(String sourcePath, String snapshotDirectory) {
 
-		this.SNAPSHOT_DIRECTORY = snapshotDirectory;
-		loadSourceFile(sourcePath);
-
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+		 
+		timestamp = sdf.format(new Date());
+		
+		SNAPSHOT_DIRECTORY = snapshotDirectory + "/" + timestamp;
+		
+		sourceMap = D2S_Utils.loadSourceMap(sourcePath);
+		
 	}
 
-	private void loadSourceFile(String sourceFile) {
-	
-			sourceMap = D2S_Utils.loadSourceMap(sourceFile);
-
-	}
 
 	/**
 	 * Generating snapshot using apache commons-io copyURLToFile

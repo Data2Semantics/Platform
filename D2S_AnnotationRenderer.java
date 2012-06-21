@@ -1,7 +1,10 @@
 package org.data2semantics.modules;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -13,6 +16,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.io.comparator.LastModifiedFileComparator;
+import org.apache.commons.io.filefilter.DirectoryFileFilter;
+import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.data2semantics.recognize.D2S_Annotation;
 import org.data2semantics.recognize.D2S_AnnotationOntologyWriter;
 import org.data2semantics.recognize.D2S_AnnotationWriter;
@@ -28,12 +34,19 @@ import org.xml.sax.SAXException;
 public class D2S_AnnotationRenderer {
 	
 	HashMap<String, String> originalFileSources = new HashMap<String, String>();
-	String bioportalResultDir, outputFile, sourceFile, type;
+	String bioportalResultDir, outputFile, sourceFile, type, annotationTimestamp;
 	
 	public D2S_AnnotationRenderer(String bioportalResultDir, String sourceFile, String outputFile, String type){
 	   
 	   originalFileSources = D2S_Utils.loadSourceMap(sourceFile);
-	   this.bioportalResultDir = bioportalResultDir;
+	   
+	   File bpDir = new File(bioportalResultDir);
+	   File[] bpDirs = bpDir.listFiles((FileFilter) DirectoryFileFilter.INSTANCE);
+		
+	   Arrays.sort(bpDirs, LastModifiedFileComparator.LASTMODIFIED_REVERSE);
+		
+	   this.bioportalResultDir = bpDirs[0].getPath();
+	   this.annotationTimestamp = this.bioportalResultDir.substring(this.bioportalResultDir.lastIndexOf('/') + 1);
 	   this.sourceFile = sourceFile;
 	   this.outputFile = outputFile;
 	   this.type = type;
@@ -42,7 +55,8 @@ public class D2S_AnnotationRenderer {
     public void render() throws SAXException, IOException, ParserConfigurationException{
     	File processedDir = new File(bioportalResultDir);
     	
-		File [] bpresults = processedDir.listFiles();
+    	// Get all results from the bioPortalResultDir, but exclude the snapshotTimestamp
+		File [] bpresults = processedDir.listFiles((FileFilter) FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter("snapshotTimestamp")));
 		
 		
 		D2S_AnnotationWriter writer ;
@@ -55,7 +69,12 @@ public class D2S_AnnotationRenderer {
 			((D2S_AnnotationOntologyWriter) writer).addFileAndURLs(Arrays.asList(bpresults),originalFileSources);
 		} else {
 			try {
-				writer = new D2S_OpenAnnotationWriter(outputFile);
+				FileReader reader = new FileReader(bioportalResultDir + "/snapshotTimestamp");
+				BufferedReader br = new BufferedReader(reader); 
+				String snapshotTimestamp; 
+				snapshotTimestamp = br.readLine();
+				
+				writer = new D2S_OpenAnnotationWriter(outputFile, annotationTimestamp, snapshotTimestamp);
 				writer.startWriting();
 			} catch (RepositoryException e) {
 				// TODO Auto-generated catch block
@@ -90,7 +109,7 @@ public class D2S_AnnotationRenderer {
 			// Strip the '.xml' of the currentResultFileName
 			String currentResultFileNameBase = currentResultFileName.substring(0,currentResultFileName.lastIndexOf('.'));
 			String originalSource = originalFileSources.get(currentResultFileNameBase);
-			System.out.println(originalSource);
+			
 			bioPortalAnnotationSAXHandler = new D2S_BioPortalAnnotationHandler(currentResultFile.getName(), originalSource);
 			parser.parse(is, bioPortalAnnotationSAXHandler);
 			
