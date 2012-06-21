@@ -85,7 +85,12 @@ public class D2S_AnnotationRenderer {
 			is = new InputSource(reader);
 			is.setEncoding("UTF-8");
 			
-			String originalSource = originalFileSources.get(currentResultFile.getName());
+			String currentResultFileName = currentResultFile.getName();
+			
+			// Strip the '.xml' of the currentResultFileName
+			String currentResultFileNameBase = currentResultFileName.substring(0,currentResultFileName.lastIndexOf('.'));
+			String originalSource = originalFileSources.get(currentResultFileNameBase);
+			System.out.println(originalSource);
 			bioPortalAnnotationSAXHandler = new D2S_BioPortalAnnotationHandler(currentResultFile.getName(), originalSource);
 			parser.parse(is, bioPortalAnnotationSAXHandler);
 			
