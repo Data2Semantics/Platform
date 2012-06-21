@@ -2,6 +2,8 @@ package org.data2semantics.modules;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.CookieHandler;
+import java.net.CookieManager;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -100,6 +102,8 @@ public class D2S_CreateSnapshot {
 
 	private String getFileSuffixBasedOnContentType(URL url) {
 		HttpURLConnection urlc;
+		CookieHandler.setDefault(new CookieManager());
+		
 		try {
 			urlc = (HttpURLConnection) url.openConnection();
 			urlc.setAllowUserInteraction(false);
