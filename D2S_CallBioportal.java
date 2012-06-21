@@ -134,7 +134,9 @@ public class D2S_CallBioportal {
 			} finally {
 				fileScanner.close();
 			}
+			System.out.println("Going to sleep for a while... (20 secs)");
 			Thread.sleep(20000);
+			System.out.println("Back to work!");
 		}
 	}
 
