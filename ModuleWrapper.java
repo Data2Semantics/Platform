@@ -50,7 +50,7 @@ public class ModuleWrapper {
 
 	    try {
 	    	
-	        Class moduleClass = classLoader.loadClass(moduleName);
+	        Class<?> moduleClass = classLoader.loadClass(moduleName);
 	        log.info("Loaded module: " + moduleClass.getName());
 
 	        Repository inputRepository = new SailRepository(new MemoryStore());
@@ -72,7 +72,9 @@ public class ModuleWrapper {
 	        
 	        log.info("Calling constructor of module "+moduleName);
 	        
-	        Constructor moduleConstructor = ModuleWrapper.class.getDeclaredConstructor(moduleClass);
+	        Constructor<?> moduleConstructor = moduleClass.getDeclaredConstructor(Repository.class, URI.class, URI.class);
+	        
+//	        Constructor moduleConstructor = ModuleWrapper.class.getDeclaredConstructor(moduleClass);
 	        AbstractModule module = (AbstractModule) moduleConstructor.newInstance(inputRepository, graphURI, resourceURI);
 	        
 	        log.info("Module constructed");
@@ -83,9 +85,11 @@ public class ModuleWrapper {
 	        
 	        // TODO Add provenance information about ModuleWrapper run
 	        
+	        log.info("Starting RepositoryWriter (writing to output.n3)");
 	        RepositoryWriter rw = new RepositoryWriter(outputRepository, "output.n3");
 	        
 	        rw.write();
+	        log.info("Done");
 	        
 			
 	    } catch (ClassNotFoundException e) {

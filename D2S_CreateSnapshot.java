@@ -7,12 +7,29 @@ import java.net.CookieManager;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
+import org.data2semantics.recognize.D2S_OpenAnnotationWriter;
 import org.data2semantics.util.D2S_Utils;
+import org.data2semantics.util.Vocab;
+import org.openrdf.model.BNode;
+import org.openrdf.model.Literal;
+import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
+import org.openrdf.model.Value;
+import org.openrdf.model.ValueFactory;
+import org.openrdf.model.vocabulary.XMLSchema;
+import org.openrdf.repository.Repository;
+import org.openrdf.repository.RepositoryConnection;
+import org.openrdf.repository.RepositoryException;
+import org.openrdf.repository.RepositoryResult;
+import org.openrdf.rio.RDFHandlerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is the class responsible for getting local snapshot/files from original
@@ -22,82 +39,138 @@ import org.data2semantics.util.D2S_Utils;
  * @author wibisono
  * 
  */
-public class D2S_CreateSnapshot {
+public class D2S_CreateSnapshot extends AbstractModule {
 
+	private Logger log = LoggerFactory.getLogger(D2S_CreateSnapshot.class);
+	
 	// List of local files and urls from which snapshot will be created
-	String SNAPSHOT_DIRECTORY = "results/snapshots";
+	String DEFAULT_SNAPSHOT_DIRECTORY = "results/snapshots";
+	String SNAPSHOT_DIRECTORY;
 	String timestamp;
 	HashMap<String, String> sourceMap = new HashMap<String, String>();
-
-	/**
-	 * 
-	 * @param sourcePath
-	 *            the path to source files containing space/tab separated local
-	 *            snapshot file + url Result will be generated in default
-	 *            snapshot directory.
-	 */
-
-	public D2S_CreateSnapshot(String sourcePath) {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-		 
-		timestamp = sdf.format(new Date());
-		SNAPSHOT_DIRECTORY += "/" + timestamp;
-		sourceMap = D2S_Utils.loadSourceMap(sourcePath);
-	}
-
-	/**
-	 * 
-	 * @param sourcePath
-	 *            the path to source files containing space/tab separated local
-	 *            snapshot file + url
-	 * @param snapshotDirectory
-	 *            is where the snapshot directory will be generated. By default
-	 *            is in results/snapshots
-	 */
-	public D2S_CreateSnapshot(String sourcePath, String snapshotDirectory) {
-
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-		 
+	String[] resources;
+	Vocab vocab;
+	
+	public D2S_CreateSnapshot(Repository repo, URI graph, URI resource) {
+		super(repo, graph, resource);
+		
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"); 
 		timestamp = sdf.format(new Date());
 		
-		SNAPSHOT_DIRECTORY = snapshotDirectory + "/" + timestamp;
 		
-		sourceMap = D2S_Utils.loadSourceMap(sourcePath);
+		
+		vocab = new Vocab(repo.getValueFactory());
+		
+		
+		try {
+			RepositoryConnection con = repo.getConnection();
+			
+			try {
+				RepositoryResult<Statement> cacheIterator = con.getStatements(resource, vocab.d2s("cachePrefix"), null, true);
+				
+				// Set cache to the default value
+				String cache = DEFAULT_SNAPSHOT_DIRECTORY;
+				
+				while (cacheIterator.hasNext()) {
+					Statement s = cacheIterator.next();
+					
+					cache = s.getObject().stringValue();	
+					
+					// We only need one cache location
+					break;
+				}
+				
+				SNAPSHOT_DIRECTORY = cache + "/" + timestamp;
+				
+			} finally {
+				con.close();
+			}
+			
+		} catch (RepositoryException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
 		
 	}
-
+	
 
 	/**
 	 * Generating snapshot using apache commons-io copyURLToFile
+	 * @return 
 	 */
-	public void generateSnapshot() {
+	public Repository start() {
 		File resultDir = new File(SNAPSHOT_DIRECTORY);
 		if (!resultDir.exists()) {
 			resultDir.mkdirs();
 		}
-		for (String localFileName : sourceMap.keySet()) {
-
+		
+		try {
+			RepositoryConnection con = repo.getConnection();
+			ValueFactory vf = repo.getValueFactory();
+			
 			try {
-				URL sourceURL = new URL(sourceMap.get(localFileName));
-				String suffix = getFileSuffixBasedOnContentType(sourceURL);
+				RepositoryResult<Statement> resourceIterator = con.getStatements(resource, vocab.d2s("resource"), null, true);
 
-				File localFile = new File(resultDir, localFileName + "."
-						+ suffix);
-				// not recreating existing files
-				if (localFile.exists())
-					continue;
+				while (resourceIterator.hasNext()) {
+					Statement s = resourceIterator.next();
+					
+					// Get the URI of the resource we want to cache
+					URI resURI = (URI) s.getObject();
+					// Turn it into a string
+					String res = resURI.stringValue();	
+					// Remove the 'http://' part of the URI
+					String resFile = res.substring(7);
+					
+					try {
+						URL sourceURL = new URL(res);
+						String suffix = getFileSuffixBasedOnContentType(sourceURL);
 
-				System.out.println("Creating snapshot for " + localFile
-						+ " from " + sourceURL);
-				FileUtils.copyURLToFile(sourceURL, localFile);
+						String cacheFileName = resultDir + "/" + URLEncoder.encode(resFile,"utf-8") + "."
+								+ suffix;
+						File localFile = new File(cacheFileName);
+						
+						// not recreating existing files
+						if (localFile.exists())
+							continue;
 
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
+						log.info("Creating snapshot for " + localFile + " from " + sourceURL);
+						FileUtils.copyURLToFile(sourceURL, localFile);
+						log.info("Done");
+						
+						BNode cacheNode = vf.createBNode();
+						
+						Statement hasCacheStatement = vf.createStatement(resURI, vocab.d2s("hasCache"), cacheNode);
+						
+						Statement cacheLocationStatement = vf.createStatement(cacheNode, vocab.d2s("cacheLocation"), vf.createLiteral(cacheFileName, XMLSchema.STRING));
+						Statement cacheTimeStatement = vf.createStatement(cacheNode, vocab.d2s("cacheTime"), vf.createLiteral(timestamp, XMLSchema.DATETIME));
+						
+						con.add(hasCacheStatement);
+						con.add(cacheLocationStatement);
+						con.add(cacheTimeStatement);
+
+					} catch (MalformedURLException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				
+
+				
+			} finally {
+				con.close();
 			}
-
+			
+		} catch (RepositoryException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
+		
+		
+
+		return repo;
 	}
 
 	private String getFileSuffixBasedOnContentType(URL url) {
@@ -130,23 +203,23 @@ public class D2S_CreateSnapshot {
 	 * 
 	 * @param args
 	 */
-	public static void main(String[] args) {
-		if (args.length < 2) {
-			System.out
-					.println("\nPlease supplly the \n[1] path to source file (localFile, remote URL in YAML format"
-							+ "\n[2] snapshot directory to be generated");
-			return;
-		}
-
-		String sourceFile = args[0];
-		String snapshotDirectory = args[1];
-		System.out.println("Creating snapshots using source file from : "
-				+ sourceFile + " into directory: " + snapshotDirectory);
-
-		D2S_CreateSnapshot snapshot = new D2S_CreateSnapshot(sourceFile,
-				snapshotDirectory);
-		snapshot.generateSnapshot();
-
-	}
+//	public static void main(String[] args) {
+//		if (args.length < 2) {
+//			System.out
+//					.println("\nPlease supplly the \n[1] path to source file (localFile, remote URL in YAML format"
+//							+ "\n[2] snapshot directory to be generated");
+//			return;
+//		}
+//
+//		String sourceFile = args[0];
+//		String snapshotDirectory = args[1];
+//		System.out.println("Creating snapshots using source file from : "
+//				+ sourceFile + " into directory: " + snapshotDirectory);
+//
+//		D2S_CreateSnapshot snapshot = new D2S_CreateSnapshot(sourceFile,
+//				snapshotDirectory);
+//		snapshot.generateSnapshot();
+//
+//	}
 
 }
