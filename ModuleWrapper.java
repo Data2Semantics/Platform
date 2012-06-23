@@ -1,11 +1,13 @@
 package org.data2semantics.modules;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import org.apache.commons.cli.Options;
+import org.apache.commons.io.IOUtils;
 import org.data2semantics.recognize.D2S_OpenAnnotationWriter;
 import org.data2semantics.util.RepositoryWriter;
 import org.openrdf.model.URI;
@@ -46,38 +48,11 @@ public class ModuleWrapper {
 		String graph = args[2];
 		String resource = args[3];
 		
-	    ClassLoader classLoader = ModuleWrapper.class.getClassLoader();
+	    
 
 	    try {
-	    	
-	        Class<?> moduleClass = classLoader.loadClass(moduleName);
-	        log.info("Loaded module: " + moduleClass.getName());
-
-	        Repository inputRepository = new SailRepository(new MemoryStore());
-			inputRepository.initialize();
-			log.info("Initialized repository");
-
-			ValueFactory vf = inputRepository.getValueFactory();
-			URI graphURI = vf.createURI(graph);
-			URI resourceURI = vf.createURI(resource);
-			
-			File file = new File(fileName);
-			log.info("Loading RDF in N3 format from "+ fileName);
-			RepositoryConnection con;
-			con = inputRepository.getConnection();
-			
-			con.add(file, "http://foo/bar#", RDFFormat.N3, graphURI);
-	        log.info("Done loading");
-	        con.close();
-	        
-	        log.info("Calling constructor of module "+moduleName);
-	        
-	        Constructor<?> moduleConstructor = moduleClass.getDeclaredConstructor(Repository.class, URI.class, URI.class);
-	        
-//	        Constructor moduleConstructor = ModuleWrapper.class.getDeclaredConstructor(moduleClass);
-	        AbstractModule module = (AbstractModule) moduleConstructor.newInstance(inputRepository, graphURI, resourceURI);
-	        
-	        log.info("Module constructed");
+	    	AbstractModule module = constructModule(moduleName, fileName,
+					graph, resource);
 	        
 	        log.info("Starting module");
 	        Repository outputRepository = module.start();
@@ -91,7 +66,8 @@ public class ModuleWrapper {
 	        rw.write();
 	        log.info("Done");
 	        
-			
+
+	        
 	    } catch (ClassNotFoundException e) {
 	    	// TODO Auto-generated catch block
 	        e.printStackTrace();
@@ -123,6 +99,44 @@ public class ModuleWrapper {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	public static AbstractModule constructModule(String moduleName,
+			String fileName, String graph, String resource)
+			throws ClassNotFoundException, RepositoryException, IOException,
+			RDFParseException, NoSuchMethodException, InstantiationException,
+			IllegalAccessException, InvocationTargetException {
+		ClassLoader classLoader = ModuleWrapper.class.getClassLoader();
+		
+		Class<?> moduleClass = classLoader.loadClass(moduleName);
+		log.info("Loaded module: " + moduleClass.getName());
+
+		Repository inputRepository = new SailRepository(new MemoryStore());
+		inputRepository.initialize();
+		log.info("Initialized repository");
+
+		ValueFactory vf = inputRepository.getValueFactory();
+		URI graphURI = vf.createURI(graph);
+		URI resourceURI = vf.createURI(resource);
+		
+		File file = new File(fileName);
+		log.info("Loading RDF in N3 format from "+ fileName);
+		RepositoryConnection con;
+		con = inputRepository.getConnection();
+		
+		con.add(file, "http://foo/bar#", RDFFormat.N3, graphURI);
+		log.info("Done loading");
+		con.close();
+		
+		log.info("Calling constructor of module "+moduleName);
+		
+		Constructor<?> moduleConstructor = moduleClass.getDeclaredConstructor(Repository.class, URI.class, URI.class);
+		
+//	        Constructor moduleConstructor = ModuleWrapper.class.getDeclaredConstructor(moduleClass);
+		AbstractModule module = (AbstractModule) moduleConstructor.newInstance(inputRepository, graphURI, resourceURI);
+		
+		log.info("Module constructed");
+		return module;
 	}
 
 }
