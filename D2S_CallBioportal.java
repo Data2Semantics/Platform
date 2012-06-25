@@ -29,6 +29,7 @@ import org.data2semantics.util.Vocab;
 import org.eclipse.jetty.util.log.Log;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
+import org.openrdf.model.BNode;
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
@@ -199,12 +200,26 @@ public class D2S_CallBioportal extends AbstractModule {
 						String annotationsFileName = process(documentURI,
 								cacheFileName);
 
+						BNode annotationBNode = vf.createBNode();
 						Statement annotationStatement = vf.createStatement(
-								documentURI, vocab.d2s("annotationLocation"),
+								documentURI, vocab.d2s("hasAnnotation"),
+								annotationBNode);
+						Statement annotationLocationStatement = vf.createStatement(
+								annotationBNode, vocab.d2s("annotationLocation"),
 								vf.createLiteral(annotationsFileName,
 										XMLSchema.STRING));
+						
+						Statement annotationTimeStatement = vf.createStatement(
+								annotationBNode, vocab.d2s("annotationTime"),
+								vf.createLiteral(timestamp,
+										XMLSchema.DATETIME));
+						
+						Statement annotationSourceStatement = vf.createStatement(annotationBNode, vocab.d2s("annotationSource"), latestCacheResource);
 
 						con.add(annotationStatement);
+						con.add(annotationLocationStatement);
+						con.add(annotationTimeStatement);
+						con.add(annotationSourceStatement);
 
 					} catch (FileNotFoundException e) {
 						// TODO Auto-generated catch block
@@ -263,7 +278,7 @@ public class D2S_CallBioportal extends AbstractModule {
 			log.info("Starting annotator");
 			client.annotateToFile(textToAnnotate, "xml", new File(
 					outputFilePath));
-			System.out.println("Wrote annotations to " + outputFilePath);
+			log.info("Wrote annotations to " + outputFilePath);
 		} finally {
 			fileScanner.close();
 		}
