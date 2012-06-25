@@ -24,6 +24,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.comparator.LastModifiedFileComparator;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.data2semantics.recognize.D2S_BioportalClient;
+import org.data2semantics.util.D2S_Utils;
 import org.data2semantics.util.Vocab;
 import org.eclipse.jetty.util.log.Log;
 import org.jsoup.Jsoup;
@@ -152,7 +153,6 @@ public class D2S_CallBioportal extends AbstractModule {
 	// }
 
 	public Repository start() {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
 		try {
 			RepositoryConnection con = repo.getConnection();
@@ -173,87 +173,49 @@ public class D2S_CallBioportal extends AbstractModule {
 							.getStatements(documentURI, vocab.d2s("hasCache"),
 									null, true);
 
-					while (cacheIterator.hasNext()) {
-						Statement cacheStatement = cacheIterator.next();
-						Resource cacheResource = (Resource) cacheStatement
-								.getObject();
-						Resource latestCacheResource = null;
+					Resource latestCacheResource = D2S_Utils.getLatest(con,
+							cacheIterator, vocab.d2s("cacheTime"));
 
-						RepositoryResult<Statement> cacheTimeIterator = con
-								.getStatements(cacheResource,
-										vocab.d2s("cacheTime"), null, true);
+					RepositoryResult<Statement> cacheLocationIterator = con
+							.getStatements(latestCacheResource,
+									vocab.d2s("cacheLocation"), null, true);
 
-						Date latest = null;
-						while (cacheTimeIterator.hasNext()) {
-							Statement cacheTimeStatement = cacheTimeIterator
-									.next();
+					String cacheFileName = "";
 
-							String cacheTime = cacheTimeStatement.getObject()
-									.stringValue();
+					while (cacheLocationIterator.hasNext()) {
+						Statement cacheLocationStatement = cacheLocationIterator
+								.next();
 
-							Date time;
+						cacheFileName = cacheLocationStatement.getObject()
+								.stringValue();
 
-							try {
-								time = sdf.parse(cacheTime);
+						// We only need one cache file
+						break;
 
-								if (latest == null) {
-									latest = time;
-									latestCacheResource = cacheResource;
-
-								} else if (time.after(latest)) {
-									latest = time;
-									latestCacheResource = cacheResource;
-								}
-							} catch (ParseException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-
-						}
-
-						RepositoryResult<Statement> cacheLocationIterator = con
-								.getStatements(latestCacheResource,
-										vocab.d2s("cacheLocation"), null, true);
-
-						String cacheFileName = "";
-
-						while (cacheLocationIterator.hasNext()) {
-							Statement cacheLocationStatement = cacheLocationIterator
-									.next();
-
-							cacheFileName = cacheLocationStatement.getObject()
-									.stringValue();
-
-							// We only need one cache file
-							break;
-
-						}
-
-						log.info("Cache location found at " + cacheFileName);
-						try {
-							String annotationsFileName = process(documentURI,
-									cacheFileName);
-
-							Statement annotationStatement = vf.createStatement(
-									documentURI, vocab
-											.d2s("annotationLocation"), vf
-											.createLiteral(annotationsFileName,
-													XMLSchema.STRING));
-
-							con.add(annotationStatement);
-
-						} catch (FileNotFoundException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (UnsupportedEncodingException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
 					}
 
+					log.info("Cache location found at " + cacheFileName);
+					try {
+						String annotationsFileName = process(documentURI,
+								cacheFileName);
+
+						Statement annotationStatement = vf.createStatement(
+								documentURI, vocab.d2s("annotationLocation"),
+								vf.createLiteral(annotationsFileName,
+										XMLSchema.STRING));
+
+						con.add(annotationStatement);
+
+					} catch (FileNotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (UnsupportedEncodingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 
 			} finally {
