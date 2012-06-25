@@ -13,21 +13,16 @@ import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
-import org.data2semantics.recognize.D2S_OpenAnnotationWriter;
-import org.data2semantics.util.D2S_Utils;
 import org.data2semantics.util.Vocab;
 import org.openrdf.model.BNode;
-import org.openrdf.model.Literal;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
-import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.vocabulary.XMLSchema;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
-import org.openrdf.rio.RDFHandlerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,11 +61,11 @@ public class D2S_CreateSnapshot extends AbstractModule {
 			RepositoryConnection con = repo.getConnection();
 			
 			try {
-				RepositoryResult<Statement> cacheIterator = con.getStatements(resource, vocab.d2s("cachePrefix"), null, true);
+				RepositoryResult<Statement> cacheIterator = con.getStatements(resource, vocab.d2s("cacheDirectory"), null, true);
 				
 				// Set cache to the default value
 				String cache = DEFAULT_SNAPSHOT_DIRECTORY;
-				
+
 				while (cacheIterator.hasNext()) {
 					Statement s = cacheIterator.next();
 					
