@@ -2,7 +2,10 @@ package org.data2semantics.modules;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
@@ -60,11 +63,22 @@ public class ModuleWrapper {
 	        
 	        // TODO Add provenance information about ModuleWrapper run
 	        
-	        log.info("Starting RepositoryWriter (writing to output.n3)");
-	        RepositoryWriter rw = new RepositoryWriter(outputRepository, "output.n3");
-	        
-	        rw.write();
-	        log.info("Done");
+	        String outputFileName = "output.n3";
+	        		
+			try {
+		        log.info("Starting RepositoryWriter (writing to output.n3)");
+		        		
+				FileOutputStream outputStream = new FileOutputStream(new File(outputFileName));
+				OutputStreamWriter streamWriter = new OutputStreamWriter(outputStream);
+		        RepositoryWriter rw = new RepositoryWriter(outputRepository, streamWriter);
+		        
+		        rw.write();
+		        log.info("Done");
+
+			} catch (FileNotFoundException e) {
+				log.error("Failed to create output file " + outputFileName);
+			}
+
 	        
 
 	        
