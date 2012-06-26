@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
+import org.data2semantics.util.D2S_Utils;
 import org.data2semantics.util.Vocab;
 import org.openrdf.model.BNode;
 import org.openrdf.model.Statement;
@@ -49,7 +50,7 @@ public class D2S_CreateSnapshot extends AbstractModule {
 	public D2S_CreateSnapshot(Repository repo, URI graph, URI resource) {
 		super(repo, graph, resource);
 		
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"); 
+		SimpleDateFormat sdf = D2S_Utils.getSimpleDateFormat();
 		timestamp = sdf.format(new Date());
 		
 		

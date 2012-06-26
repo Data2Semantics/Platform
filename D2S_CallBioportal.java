@@ -68,7 +68,7 @@ public class D2S_CallBioportal extends AbstractModule {
 	D2S_CallBioportal(Repository repo, URI graph, URI resource) {
 		super(repo, graph, resource);
 
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+		SimpleDateFormat sdf = D2S_Utils.getSimpleDateFormat();
 		timestamp = sdf.format(new Date());
 
 		vocab = new Vocab(repo.getValueFactory());
