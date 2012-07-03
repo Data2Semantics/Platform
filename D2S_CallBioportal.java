@@ -145,6 +145,7 @@ public class D2S_CallBioportal extends AbstractModule {
 								true);
 
 				while (documentIterator.hasNext()) {
+					String cacheFileName = null;
 					Statement docStatement = documentIterator.next();
 					URI documentURI = (URI) docStatement.getObject();
 					log.info("Going to annotate document "
@@ -157,60 +158,68 @@ public class D2S_CallBioportal extends AbstractModule {
 					Resource latestCacheResource = D2S_Utils.getLatest(con,
 							cacheIterator, vocab.d2s("cacheTime"));
 
-					RepositoryResult<Statement> cacheLocationIterator = con
-							.getStatements(latestCacheResource,
-									vocab.d2s("cacheLocation"), null, true);
+					if (latestCacheResource != null) {
+						RepositoryResult<Statement> cacheLocationIterator = con
+								.getStatements(latestCacheResource,
+										vocab.d2s("cacheLocation"), null, true);
 
-					String cacheFileName = "";
 
-					while (cacheLocationIterator.hasNext()) {
-						Statement cacheLocationStatement = cacheLocationIterator
-								.next();
+						while (cacheLocationIterator.hasNext()) {
+							Statement cacheLocationStatement = cacheLocationIterator
+									.next();
 
-						cacheFileName = cacheLocationStatement.getObject()
-								.stringValue();
+							cacheFileName = cacheLocationStatement.getObject()
+									.stringValue();
 
-						// We only need one cache file
-						break;
+							// We only need one cache file
+							break;
 
+						}
+
+
+						log.info("Cache location found at " + cacheFileName);
+						try {
+							String annotationsFileName = process(documentURI,
+									cacheFileName);
+	
+							BNode annotationBNode = vf.createBNode();
+							Statement annotationStatement = vf.createStatement(
+									documentURI, vocab.d2s("hasAnnotation"),
+									annotationBNode);
+							Statement annotationLocationStatement = vf.createStatement(
+									annotationBNode, vocab.d2s("annotationLocation"),
+									vf.createLiteral(annotationsFileName,
+											XMLSchema.STRING));
+							
+							Statement annotationTimeStatement = vf.createStatement(
+									annotationBNode, vocab.d2s("annotationTime"),
+									vf.createLiteral(timestamp,
+											XMLSchema.DATETIME));
+							
+							Statement annotationSourceStatement = vf.createStatement(annotationBNode, vocab.d2s("annotationSource"), latestCacheResource);
+	
+							con.add(annotationStatement);
+							con.add(annotationLocationStatement);
+							con.add(annotationTimeStatement);
+							
+							log.info("Adding annotationSourceStatement: \n" + annotationSourceStatement);
+							con.add(annotationSourceStatement);
+	
+						} catch (FileNotFoundException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (UnsupportedEncodingException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+
+					} else {
+						log.warn("I can't annotate this file: No cached copy for "+ documentURI.stringValue());
 					}
-
-					log.info("Cache location found at " + cacheFileName);
-					try {
-						String annotationsFileName = process(documentURI,
-								cacheFileName);
-
-						BNode annotationBNode = vf.createBNode();
-						Statement annotationStatement = vf.createStatement(
-								documentURI, vocab.d2s("hasAnnotation"),
-								annotationBNode);
-						Statement annotationLocationStatement = vf.createStatement(
-								annotationBNode, vocab.d2s("annotationLocation"),
-								vf.createLiteral(annotationsFileName,
-										XMLSchema.STRING));
-						
-						Statement annotationTimeStatement = vf.createStatement(
-								annotationBNode, vocab.d2s("annotationTime"),
-								vf.createLiteral(timestamp,
-										XMLSchema.DATETIME));
-						
-						Statement annotationSourceStatement = vf.createStatement(annotationBNode, vocab.d2s("annotationSource"), latestCacheResource);
-
-						con.add(annotationStatement);
-						con.add(annotationLocationStatement);
-						con.add(annotationTimeStatement);
-						con.add(annotationSourceStatement);
-
-					} catch (FileNotFoundException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (UnsupportedEncodingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					
 				}
 
 			} finally {
