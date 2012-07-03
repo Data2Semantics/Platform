@@ -201,8 +201,6 @@ public class D2S_CallBioportal extends AbstractModule {
 							con.add(annotationStatement);
 							con.add(annotationLocationStatement);
 							con.add(annotationTimeStatement);
-							
-							log.info("Adding annotationSourceStatement: \n" + annotationSourceStatement);
 							con.add(annotationSourceStatement);
 	
 						} catch (FileNotFoundException e) {
