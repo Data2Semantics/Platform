@@ -1,39 +1,23 @@
 package org.data2semantics.modules;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.List;
 import java.util.Scanner;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.apache.commons.io.comparator.LastModifiedFileComparator;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.data2semantics.recognize.D2S_BioportalClient;
 import org.data2semantics.util.D2S_Utils;
 import org.data2semantics.util.Vocab;
-import org.eclipse.jetty.util.log.Log;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 import org.openrdf.model.BNode;
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
-import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.vocabulary.XMLSchema;
 import org.openrdf.repository.Repository;
@@ -42,10 +26,6 @@ import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 /**
  * 
@@ -92,7 +72,7 @@ public class D2S_CallBioportal extends AbstractModule {
 					break;
 				}
 
-				BIOPORTAL_DIRECTORY = bioportalDirectoryName + "/" + timestamp;
+				BIOPORTAL_DIRECTORY = bioportalDirectoryName + "/" + timestamp.replaceAll(":","-");
 
 				log.info("Annotations will be stored in " + BIOPORTAL_DIRECTORY);
 

@@ -76,7 +76,7 @@ public class D2S_CreateSnapshot extends AbstractModule {
 					break;
 				}
 				
-				SNAPSHOT_DIRECTORY = cache + "/" + timestamp;
+				SNAPSHOT_DIRECTORY = cache + "/" + timestamp.replaceAll(":","-");
 				
 			} finally {
 				con.close();
