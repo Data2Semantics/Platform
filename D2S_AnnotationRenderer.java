@@ -148,7 +148,7 @@ public class D2S_AnnotationRenderer extends AbstractModule {
 		String documentURI = writer.getDocumentURI().stringValue();
 		
 		
-		System.out.println("Reading annotations from file "+annotationFileName);
+		log.info("Reading annotations from file "+annotationFileName);
 		
 		File annotationFile = new File(annotationFileName);
 		parser = saxParserFactory.newSAXParser();
