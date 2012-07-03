@@ -1,16 +1,10 @@
 package org.data2semantics.modules;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -18,22 +12,13 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.apache.commons.io.comparator.LastModifiedFileComparator;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.data2semantics.recognize.D2S_Annotation;
-import org.data2semantics.recognize.D2S_AnnotationOntologyWriter;
 import org.data2semantics.recognize.D2S_AnnotationWriter;
 import org.data2semantics.recognize.D2S_BioPortalAnnotationHandler;
-import org.data2semantics.recognize.D2S_BioportalClient;
 import org.data2semantics.recognize.D2S_OpenAnnotationWriter;
-import org.data2semantics.util.D2S_Utils;
 import org.data2semantics.util.Vocab;
-import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
-import org.openrdf.model.ValueFactory;
-import org.openrdf.model.vocabulary.XMLSchema;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -111,10 +96,9 @@ public class D2S_AnnotationRenderer extends AbstractModule {
 				while (documentIterator.hasNext()) {
 					Statement docStatement = documentIterator.next();
 					URI documentURI = (URI) docStatement.getObject();
-					log.info("Converting annotations of document "
-							+ documentURI.stringValue());
+					log.info("Converting annotations of document "	+ documentURI.stringValue());
 
-					if (ANNOTATION_TYPE == "http://www.w3.org/ns/openannotation/core/") {
+					if (ANNOTATION_TYPE.equals("http://www.w3.org/ns/openannotation/core/")) {
 						
 						D2S_AnnotationWriter writer = new D2S_OpenAnnotationWriter(con, documentURI);
 						
@@ -125,9 +109,6 @@ public class D2S_AnnotationRenderer extends AbstractModule {
 						log.error("No compatible annotation type specified!");
 						
 					}
-						
-
-
 
 				}
 
@@ -161,7 +142,6 @@ public class D2S_AnnotationRenderer extends AbstractModule {
 		SAXParser parser ;
 		Reader annotationReader ;
 		InputSource is; 
-		List<D2S_Annotation> currentAnnotations;
 		
 		String annotationFileName = writer.getAnnotationFileName();
 		String annotationSourceLocation = writer.getAnnotationSourceLocation();
@@ -176,60 +156,15 @@ public class D2S_AnnotationRenderer extends AbstractModule {
 		is = new InputSource(annotationReader);
 		is.setEncoding("UTF-8");
 		
-		bioPortalAnnotationSAXHandler = new D2S_BioPortalAnnotationHandler(annotationSourceLocation, documentURI);
+		bioPortalAnnotationSAXHandler = new D2S_BioPortalAnnotationHandler(annotationSourceLocation, documentURI, writer);
 		parser.parse(is, bioPortalAnnotationSAXHandler);
-		
-		currentAnnotations = bioPortalAnnotationSAXHandler.getAnnotations();
-		for(D2S_Annotation currentAnnotation : currentAnnotations)
-			writer.addAnnotation(currentAnnotation);
+
+// Bioportal SAX handler now have access to writer, as it supposed to be instead of collection annotations in memory first.
+//		currentAnnotations = bioPortalAnnotationSAXHandler.getAnnotations();
+//		for(D2S_Annotation currentAnnotation : currentAnnotations)
+//			writer.addAnnotation(currentAnnotation);
 
 	}
 	
-//	public static void main(String[] args) throws SAXException, IOException, ParserConfigurationException {
-//		if(args.length < 4){
-//			System.out.println("\n Four arguments required: "+
-//								"\n[1] directory where bioportal annotation xml results resides, "+
-//								"\n[2] initial source file (local cache + original URL) list " +
-//								"\n[3] the output file name " +
-//								"\n[4] the type of ontology (AO or OA)");
-//			return;
-//		}
-//		
-//		File bioportalResultDirectory = new File(args[0]);
-//		if (!bioportalResultDirectory.exists()) {
-//			System.out
-//					.println("Please run first mvn -P call-bioportal, since there is no snapshot to be processed");
-//			return;
-//		}
-//		
-//		String type = args[3];
-//		if (type != "AO") {
-//			type = "OA";
-//		}
-//		System.out.println("Creating RDF of type "+args[3]+" based on bioportal output from: "+args[0]+" using source file: "+args[1]+" into directory : "+args[2]);
-//		D2S_AnnotationRenderer renderer = new D2S_AnnotationRenderer(args[0], args[1], args[2], type);
-//		renderer.render();
-//
-//   }
-	
-	// Load source file information into a hashmap, mapping file name to original URL
-	// To be used when generation annotation ontology.
-	// We will replace this with YAML when I am in the mood.
-//	private void initializeSourceFiles(String sourceFile) {
-//	      	Yaml loader = new Yaml();
-//			try {
-//				originalFileSources  = (HashMap<String,String>) loader.load(new FileInputStream(sourceFile));
-//			} catch (FileNotFoundException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//			// Either appending here or on local name
-//			HashMap<String,String> appendedFiles = new HashMap<String, String>();
-//			for(String fileName : originalFileSources.keySet()){
-//				appendedFiles.put("output-"+fileName+".xml", originalFileSources.get(fileName));
-//			}
-//			originalFileSources.putAll(appendedFiles);
-//	}
-	
-	// Now reading from turtle format
+
 }
