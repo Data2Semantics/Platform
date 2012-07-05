@@ -102,8 +102,10 @@ public class D2S_AnnotationRenderer extends AbstractModule {
 						
 						D2S_AnnotationWriter writer = new D2S_OpenAnnotationWriter(con, documentURI);
 						
-						render(writer);
-						
+						if (writer.hasAnnotations()) {
+							log.info("Starting renderer...");
+							render(writer);
+						}
 					} else {
 						
 						log.error("No compatible annotation type specified!");
