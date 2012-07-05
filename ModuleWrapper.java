@@ -16,10 +16,12 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
+import org.openrdf.repository.http.HTTPRepository;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFParseException;
 import org.openrdf.sail.memory.MemoryStore;
+import org.openrdf.sail.nativerdf.NativeStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +96,17 @@ public class ModuleWrapper {
 		Class<?> moduleClass = classLoader.loadClass(moduleName);
 		log.info("Loaded module: " + moduleClass.getName());
 
-		Repository inputRepository = new SailRepository(new MemoryStore());
+//		File dataDir = new File("results/repository/");
+//		Repository inputRepository = new SailRepository(new NativeStore(dataDir));
+		
+		String sesameServer = "http://localhost:8000/openrdf-sesame";
+		String repositoryID = "d2smodule2";
+		Repository inputRepository = new HTTPRepository(sesameServer, repositoryID);
+		
+		
+//		Repository inputRepository = new SailRepository(new MemoryStore());
+		
+		
 		inputRepository.initialize();
 		log.info("Initialized repository");
 
