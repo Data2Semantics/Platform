@@ -99,12 +99,12 @@ public class ModuleWrapper {
 //		File dataDir = new File("results/repository/");
 //		Repository inputRepository = new SailRepository(new NativeStore(dataDir));
 		
-		String sesameServer = "http://localhost:8000/openrdf-sesame";
-		String repositoryID = "d2smodule2";
-		Repository inputRepository = new HTTPRepository(sesameServer, repositoryID);
+//		String sesameServer = "http://localhost:8000/openrdf-sesame";
+//		String repositoryID = "d2smodule2";
+//		Repository inputRepository = new HTTPRepository(sesameServer, repositoryID);
 		
 		
-//		Repository inputRepository = new SailRepository(new MemoryStore());
+		Repository inputRepository = new SailRepository(new MemoryStore());
 		
 		
 		inputRepository.initialize();
