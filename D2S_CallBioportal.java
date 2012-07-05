@@ -262,7 +262,7 @@ public class D2S_CallBioportal extends AbstractModule {
 			log.info("Done");
 			String textToAnnotate = Jsoup.clean(stringBuilder.toString(),
 					Whitelist.none());
-			log.info("Starting annotator number of characters in text to Annotate"+textToAnnotate.length());
+			log.info("Starting annotator. Number of characters in text to annotate: "+textToAnnotate.length());
 			client.annotateToFile(textToAnnotate, "xml", new File(
 					outputFilePath));
 			log.info("Wrote annotations to " + outputFilePath);
